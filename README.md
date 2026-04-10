@@ -30,6 +30,6 @@ Esse algoritmo chega no limite de processamento da máquina de forma muito rápi
 
 - Com 6 cidades: $6! = 720$ possíveis rotas
 - Com 7 cidades: $7! = 5040$ possíveis rotas
-- Com 8 cidades: $8! = $40.320$ possíveis rotas
+- Com 8 cidades: $8! = 40.320$ possíveis rotas
 - Com 9 cidades: $9! = 362.880$ possíveis rotas
 - Com 10 cidades: $10! = 3.628.800$ possíveis rotas
