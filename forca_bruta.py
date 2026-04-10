@@ -11,7 +11,7 @@ def calculo_distancia(cidades, distancia_cidades):
         distancia_cidades[(c2, c1)] = distancia
 
 # Função que calcula uma rota permultada
-def calculo_tamanho_rota(rota, distancia, dist_parcial):
+def calculo_tamanho_rota(rota, distancia):
     total = 0
     for c in range(len(rota) - 1):
         total += distancia[(rota[c], rota[c+1])]
@@ -50,7 +50,7 @@ for cidade in lista_cidades:
 # Geração de todas as n! rotas da matriz 
 for permuta in itertools.permutations(lista_cidades, len(lista_cidades)):
     rota = [cidade_origem] + list(permuta)
-    tamanho_rota = calculo_tamanho_rota(rota, distancia_cidades, distancia_parcial)
+    tamanho_rota = calculo_tamanho_rota(rota, distancia_cidades)
 
     if menor_distancia == None:
         menor_distancia = tamanho_rota
