@@ -1,5 +1,6 @@
 import sys
 import itertools
+import time
 
 # Função que calcula a distância entre 2 cidades da matriz
 def calculo_distancia(cidades, distancia_cidades):
@@ -11,10 +12,13 @@ def calculo_distancia(cidades, distancia_cidades):
         distancia_cidades[(c2, c1)] = distancia
 
 # Função que calcula uma rota permultada
-def calculo_tamanho_rota(rota, distancia):
+def calculo_tamanho_rota(rota, distancia, limite_atual):
     total = 0
     for c in range(len(rota) - 1):
         total += distancia[(rota[c], rota[c+1])]
+        # Faz a poda da rota se ela for maior que a menor rota já verificada
+        if limite_atual is not None and total >= limite_atual:
+            return None
     total += distancia[rota[-1], rota[0]]
     return total
 
@@ -28,11 +32,13 @@ coluna = int(elementos[1]) # Número de colunas da matriz
 matriz = []
 localizacao_cidades = {}
 distancia_cidades = {}
-melhor_rota = None
 menor_distancia = None
-linha_matriz = []
+melhor_rota = None
+
+inicio = time.perf_counter()
 # Formatação da matriz de entrada
 for i in range(linha):
+    linha_matriz = []
     for j in range(coluna):
         valor = elementos_puros[i * coluna + j]
         linha_matriz.append(valor)
@@ -42,23 +48,20 @@ for i in range(linha):
 
 calculo_distancia(localizacao_cidades, distancia_cidades)
 lista_cidades = list(localizacao_cidades.keys())
-for cidade in lista_cidades:
-    if cidade == 'R':
-        cidade_origem = cidade
-        lista_cidades.remove('R')
-        break
+cidade_origem = 'R'
+lista_cidades = [c for c in lista_cidades if c != 'R']
+
 # Geração de todas as n! rotas da matriz 
 for permuta in itertools.permutations(lista_cidades, len(lista_cidades)):
     rota = [cidade_origem] + list(permuta)
-    tamanho_rota = calculo_tamanho_rota(rota, distancia_cidades)
-
-    if menor_distancia == None:
+    tamanho_rota = calculo_tamanho_rota(rota, distancia_cidades, menor_distancia)
+    if tamanho_rota is None: 
+        continue  # Passa direto pra próxima rota no caso da atual ser maior que a menor rota já verificada
+    elif menor_distancia is None or tamanho_rota < menor_distancia:
         menor_distancia = tamanho_rota
-        melhor_rota = rota + [cidade_origem]
-    elif tamanho_rota <= menor_distancia:
-        menor_distancia = tamanho_rota
-        melhor_rota = rota + [cidade_origem]
+        melhor_rota = rota
 
+fim = time.perf_counter()
 # Formatação da saída de lista para string
 resultado = " ".join([cid for cid in melhor_rota if cid != 'R'])
 
@@ -67,3 +70,5 @@ print(menor_distancia)
 
 # Saída OFICIAL do programa. Essa é a rota de menor custo que o drone precisa efetuar
 print(resultado)
+print()
+print(f'Demorou: {fim-inicio}')
