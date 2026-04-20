@@ -71,4 +71,4 @@ print(menor_distancia)
 # Saída OFICIAL do programa. Essa é a rota de menor custo que o drone precisa efetuar
 print(resultado)
 print()
-print(f'Demorou: {fim-inicio}')
+print(f'Demorou: {fim-inicio:.2f} segundos')
