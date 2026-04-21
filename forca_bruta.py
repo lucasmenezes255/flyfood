@@ -51,8 +51,8 @@ for nome_arquivo in arquivos:
             elementos = lista_matriz.split()
             elementos_puros = elementos[2:] # Guarda os elementos da matriz, zeros (0) e cidades (A, B, C..)
             linha = int(elementos[0]) # Número de linhas da matriz
-            coluna = int(elementos[1])
-            print('='*50) # Número de colunas da matriz
+            coluna = int(elementos[1]) # Número de colunas da matriz
+            print('='*50) 
             print(f"{' MATRIZ DE ENTRADA ':^50}")
             print('='*50)
             print(f"{' PARA INTERROMPER DURANTE A EXECUÇÃO: CTRL + C ':^50}\n")
