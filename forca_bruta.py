@@ -93,7 +93,7 @@ for nome_arquivo in arquivos:
         # Saída OFICIAL do programa. Essa é a rota de menor custo que o drone precisa efetuar
         print(f"\nMenor rota: {resultado}")
 
-        # Tamanho da distância da menor rota de entregas
+        # Tamanho da distância da menor rota de entregas 
         print(f"\nTamanho da rota: {menor_distancia}")
         print(f'\nDemorou: {fim-inicio:.2f} segundos\n')
     else:
