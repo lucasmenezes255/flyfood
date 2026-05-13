@@ -34,7 +34,8 @@ def calculo_tamanho_rota(rota, distancia, limite_atual):
     total += distancia[rota[-1], rota[0]]
     return total
 
-arquivos = ['matriz5.txt', 'matriz8.txt', 'matriz10.txt', 'matriz11.txt', 'matriz12.txt', 'matriz13.txt', 'matriz14.txt']
+arquivos = ['forca_bruta/matriz5.txt', 'forca_bruta/matriz8.txt', 'forca_bruta/matriz10.txt', 'forca_bruta/matriz11.txt', 
+            'forca_bruta/matriz12.txt', 'forca_bruta/matriz13.txt', 'forca_bruta/matriz14.txt']
 
 for nome_arquivo in arquivos:
 # Declaração de variáveis e estruturas necessárias
