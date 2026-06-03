@@ -42,17 +42,16 @@ def inicializar_populacao(tamanho, n_cidades):
 
 def selecionar_por_torneio_binario(populacao, distancias):
     """
-    PASSO 3: Seleção por Torneio Binário (k=2)
-    Escolhe 2 indivíduos aleatórios e o de menor custo vence.
+        e o passo 3 do processo, sendo a função de seleção por torneio binário, 
+        onde dois indivíduos são selecionados aleatoriamente
     """
     selecionados = random.sample(populacao, 2)
     return min(selecionados, key=lambda ind: custo_caminho(ind, distancias))
 
 def selecionar_por_roleta(populacao, distancias):
     """
-    PASSO 3: Seleção por Roleta (Roulette Wheel Selection)
-    Como é um problema de minimização, usamos 1/custo para dar
-    mais chance aos caminhos mais curtos.
+    e uma possivel alternativa para o passo 3, onde a seleção é feita por roleta (roulette wheel selection) baseada na 
+    aptidão inversa (1/custo) para favorecer soluções de menor custo.
     """
     custos = [custo_caminho(ind, distancias) for ind in populacao]
     aptidoes = [1.0 / c for c in custos]
@@ -76,8 +75,9 @@ def selecionar_pai(populacao, distancias, metodo="torneio"):
 
 def crossover_ox(pai1, pai2):
     """
-    PASSO 4: Cruzamento (OX)
-    Gera DOIS filhos invertendo os papéis dos pais.
+    função de gerar filhos, que cruza dois pais usando o crossover de ordem (Order Crossover - OX),
+    onde um segmento do pai1 é copiado para o filho, e as cidades restantes são preenchidas na ordem em que aparecem no pai2, 
+    garantindo que o filho seja uma permutação válida.
     """
     def gerar_um_filho(p1_base, p2_fill):
         n = len(p1_base)
@@ -107,7 +107,8 @@ def mutacao_swap(solucao):
 
 def busca_local_2opt(solucao, distancias):
     """
-    PASSO 6: 2-opt (Melhoria Local)
+    procura pela melhoria local usando o método 2-opt, que tenta melhorar a solução atual invertendo segmentos do caminho 
+    e verificando se isso reduz o custo total, continuando a busca até que nenhuma melhoria seja encontrada.
     """
     n = len(solucao)
     melhor_solucao = list(solucao)
