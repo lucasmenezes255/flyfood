@@ -185,7 +185,10 @@ if __name__ == "__main__":
     for g in range(N_GERACOES):
         # Seleção dos pais (usando o método configurado)
         pai1 = selecionar_pai(populacao, distancias, metodo=METODO_SELECAO_PAIS)
-        pai2 = selecionar_pai(populacao, distancias, metodo=METODO_SELECAO_PAIS)
+        while True:
+            pai2 = selecionar_pai(populacao, distancias, metodo=METODO_SELECAO_PAIS)
+            if pai2 != pai1:
+                break
         
         # Crossover (Gera dois filhos)
         filhos = crossover_ox(pai1, pai2)
