@@ -1,7 +1,7 @@
 import random
 
 # ---------------------------------------------------------
-# FUNÇÕES DE APOIO E CARREGAMENTO
+#              FUNÇÕES DE APOIO E CARREGAMENTO
 # ---------------------------------------------------------
 
 def carregar_distancias(caminho_arquivo):
@@ -27,26 +27,26 @@ def custo_caminho(permutacao, distancias):
     soma += distancias[(permutacao[-1], permutacao[0])]
     return soma
 
-# ---------------------------------------------------------
-# OPERADORES DO ALGORITMO (V3 - OPERADORES CUSTOMIZADOS)
-# ---------------------------------------------------------
+# ----------------------------------------------------------
+#   OPERADORES DO ALGORITMO (V3 - OPERADORES CUSTOMIZADOS)
+# ----------------------------------------------------------
 
 def inicializar_populacao(tamanho, n_cidades):
     populacao = []
     while len(populacao) < tamanho:
-        individuo = list(range(1, n_cidades + 1))
-        random.shuffle(individuo)
-        if individuo not in populacao: # Garante variedade inicial
+        individuo = list(range(1, n_cidades + 1))   # Gera um inivíduo ex: [1,2,3,4,5,...,56,57,58]
+        random.shuffle(individuo)                   # Embaralha esse indivíduo
+        if individuo not in populacao:              # Garante variedade inicial
             populacao.append(individuo)
     return populacao
 
 def selecionar_por_torneio_binario(populacao, distancias):
     """
-        e o passo 3 do processo, sendo a função de seleção por torneio binário, 
-        onde dois indivíduos são selecionados aleatoriamente
+        Seleção por torneio binário onde seleciona ALEATORIAMENTE dois 
+        indivíduos da população e retorna o menor deles para ser o PAI
     """
     selecionados = random.sample(populacao, 2)
-    return min(selecionados, key=lambda ind: custo_caminho(ind, distancias))
+    return min(selecionados, key=lambda individuo: custo_caminho(individuo, distancias))
 
 def selecionar_por_roleta(populacao, distancias):
     """
@@ -75,59 +75,74 @@ def selecionar_pai(populacao, distancias, metodo="torneio"):
 
 def crossover_ox(pai1, pai2):
     """
-    função de gerar filhos, que cruza dois pais usando o crossover de ordem (Order Crossover - OX),
-    onde um segmento do pai1 é copiado para o filho, e as cidades restantes são preenchidas na ordem em que aparecem no pai2, 
-    garantindo que o filho seja uma permutação válida.
+        Função de gerar filhos, que cruza dois pais usando o Order Crossover - OX,
+        onde um segmento do pai1 é copiado para o filho, e o restante é preenchido na 
+        ordem em que aparecem no pai2, garantindo que o filho seja uma permutação válida.
     """
-    def gerar_um_filho(p1_base, p2_fill):
-        n = len(p1_base)
-        c1, c2 = sorted(random.sample(range(n), 2))
-        filho = [None] * n
-        filho[c1:c2+1] = p1_base[c1:c2+1]
-        
-        pos_filho = (c2 + 1) % n
-        pos_pai2 = (c2 + 1) % n
-        while None in filho:
-            cidade = p2_fill[pos_pai2]
-            if cidade not in filho:
-                filho[pos_filho] = cidade
-                pos_filho = (pos_filho + 1) % n
-            pos_pai2 = (pos_pai2 + 1) % n
-        return filho
+    def gerar_filhos(pai1, pai2):
+        tamanho_pais = len(pai1)                                        # Guarda o tamanho do indivíduo pai. Como os pais tem o mesmo tamanho, tanto faz usar pai1 ou pai2
+        corte1, corte2 = sorted(random.sample(range(tamanho_pais), 2))  # Seleciona 2 índices da lista dos pais para ser o segmento do filhos
+        filho1 = [None] * tamanho_pais                                  # Cria o indivíduo filho como os elementos vazios
+        filho2 = [None] * tamanho_pais
 
-    filho1 = gerar_um_filho(pai1, pai2)
-    filho2 = gerar_um_filho(pai2, pai1)
-    return filho1, filho2
+        filho1[corte1:corte2+1] = pai1[corte1:corte2+1]     # Insere o segmento retirado do pai 1 nas mesmas posições no filho 1
+        filho2[corte1:corte2+1] = pai2[corte1:corte2+1]     # Insere o segmento retirado do pai 2 nas mesmas posições no filho 2
+        
+        pos_filho = (corte2 + 1) % tamanho_pais             # Define o ponto de partida (1 índice depois do segmento) para inserir os elementos do pai 2 no filho 1
+        pos_pai_fill = (corte2 + 1) % tamanho_pais
+        # Repete enquanto o indivíduo filho estiver com elementos vazios
+        while None in filho1:
+            cidade = pai2[pos_pai_fill]
+            if cidade not in filho1:
+                filho1[pos_filho] = cidade                  # Insere o elemento de pai 2 na posição do filho 1
+                pos_filho = (pos_filho + 1) % tamanho_pais
+            pos_pai_fill = (pos_pai_fill + 1) % tamanho_pais
+
+        while None in filho2:
+            cidade = pai1[pos_pai_fill]
+            if cidade not in filho2:
+                filho2[pos_filho] = cidade                  # Insere o elemento de pai 1 na posição do filho 2
+                pos_filho = (pos_filho + 1) % tamanho_pais
+            pos_pai_fill = (pos_pai_fill + 1) % tamanho_pais
+        return filho1, filho2
+
+    filhos = gerar_filhos(pai1, pai2)
+    return filhos
 
 def mutacao_swap(solucao):
-    n = len(solucao)
-    i, j = random.sample(range(n), 2)
+    """
+        Modificação do indivíduo gerado onde seleciona-se 2 índices e troca os valores deles.
+        O elemento da posição X vai para a posição Y e o elemento da posição Y vai para a posição X
+    """
+    tamanho_filho = len(solucao)
+    i, j = random.sample(range(tamanho_filho), 2)
     solucao[i], solucao[j] = solucao[j], solucao[i]
     return solucao
 
 def busca_local_2opt(solucao, distancias):
     """
-    procura pela melhoria local usando o método 2-opt, que tenta melhorar a solução atual invertendo segmentos do caminho 
+    Procura pela melhoria local usando o método 2-opt, que tenta melhorar a solução atual invertendo segmentos do caminho 
     e verificando se isso reduz o custo total, continuando a busca até que nenhuma melhoria seja encontrada.
     """
-    n = len(solucao)
+    tamanho_filho = len(solucao)
     melhor_solucao = list(solucao)
-    melhor_custo = custo_caminho(melhor_solucao, distancias)
+    melhor_custo = custo_caminho(melhor_solucao, distancias)            # Guarda o custo atual do filho
     melhorou = True
     while melhorou:
         melhorou = False
-        for i in range(n):
-            for j in range(i + 2, n):
-                idx_i, idx_i_plus = i, (i + 1) % n
-                idx_j, idx_j_plus = j, (j + 1) % n
-                if idx_j_plus == idx_i: continue
-                a, b = melhor_solucao[idx_i], melhor_solucao[idx_i_plus]
-                c, d = melhor_solucao[idx_j], melhor_solucao[idx_j_plus]
-                custo_atual = distancias[(a, b)] + distancias[(c, d)]
-                novo_custo = distancias[(a, c)] + distancias[(b, d)]
+        # Percorre toda o filho setando ponteiros para os índices
+        for i in range(tamanho_filho):
+            for j in range(i + 2, tamanho_filho):
+                index_i, index_i_plus = i, (i + 1) % tamanho_filho      # Guarda o índice da cidade i e a próxima cidade ao qual está ligado
+                index_j, index_j_plus = j, (j + 1) % tamanho_filho      # Guarda o índice da cidade j e a próxima cidade ao qual está ligado
+                if index_j_plus == index_i: continue
+                a, b = melhor_solucao[index_i], melhor_solucao[index_i_plus]
+                c, d = melhor_solucao[index_j], melhor_solucao[index_j_plus]
+                custo_atual = distancias[(a, b)] + distancias[(c, d)]   # Calcula somente a soma dos índices com sua próxima cidade
+                novo_custo = distancias[(a, c)] + distancias[(b, d)]    # Calcula a soma dos índices trocados com as próximas cidades
                 if novo_custo < custo_atual:
-                    melhor_solucao[i+1 : j+1] = melhor_solucao[i+1 : j+1][::-1]
-                    melhor_custo -= (custo_atual - novo_custo)
+                    melhor_solucao[i+1 : j+1] = melhor_solucao[i+1 : j+1][::-1] # Inverte o trecho encontrado que reduz o custo do filho
+                    melhor_custo -= (custo_atual - novo_custo)          # Subtrai a diferença de custo
                     melhorou = True
                     break
             if melhorou: break
@@ -135,7 +150,7 @@ def busca_local_2opt(solucao, distancias):
 
 def selecionar_sobreviventes_steady_state(populacao, filhos, distancias, tamanho_populacao):
     """
-    PASSO 7: Seleção de Sobreviventes (Steady-State com mesclagem Pop + Filhos)
+    Seleção de Sobreviventes (Steady-State com mesclagem Pop + Filhos)
     Mescla a população e os filhos, ordena por custo (minimização),
     e seleciona os melhores indivíduos para formar a nova população,
     garantindo que o melhor indivíduo do conjunto seja sempre preservado.
@@ -143,30 +158,30 @@ def selecionar_sobreviventes_steady_state(populacao, filhos, distancias, tamanho
     """
     pool_completo = populacao + filhos
     # Ordena pelo custo (menor custo primeiro)
-    pool_ordenado = sorted(pool_completo, key=lambda ind: custo_caminho(ind, distancias))
+    pool_ordenado = sorted(pool_completo, key=lambda individuo: custo_caminho(individuo, distancias))
     
     nova_populacao = []
-    for ind in pool_ordenado:
-        if ind not in nova_populacao:
-            nova_populacao.append(ind)
+    for individuo in pool_ordenado:
+        if individuo not in nova_populacao:
+            nova_populacao.append(individuo)
         if len(nova_populacao) == tamanho_populacao:
             break
             
     # Caso haja duplicados extremos e não preencha a população
     if len(nova_populacao) < tamanho_populacao:
-        for ind in pool_ordenado:
+        for individuo in pool_ordenado:
             if len(nova_populacao) == tamanho_populacao:
                 break
-            nova_populacao.append(ind)
+            nova_populacao.append(individuo)
             
     return nova_populacao
 
-# ---------------------------------------------------------
-# EXECUÇÃO PRINCIPAL
+# --------------------------------------------------------
+#                    EXECUÇÃO PRINCIPAL
 # ---------------------------------------------------------
 
 if __name__ == "__main__":
-    TAMANHO_POPULACAO = 20
+    TAMANHO_POPULACAO = 100
     N_GERACOES = 1000
     PROB_BUSCA_LOCAL = 0.3
     TAXA_MUTACAO = 0.2
@@ -178,28 +193,29 @@ if __name__ == "__main__":
     distancias = carregar_distancias(ARQUIVO_DADOS)
     populacao = inicializar_populacao(TAMANHO_POPULACAO, 58)
     
-    melhor_inicial = min([custo_caminho(ind, distancias) for ind in populacao])
+    melhor_inicial = min([custo_caminho(individuo, distancias) for individuo in populacao]) # Guarda o melhor indivíduo da população inicial
     print(f"Melhor inicial: {melhor_inicial}")
     print(f"Iniciando AG V3 (Seleção de Pais: {METODO_SELECAO_PAIS.upper()} | Sobreviventes: Steady-State com Mesclagem)...")
 
-    for g in range(N_GERACOES):
+    for geracao in range(N_GERACOES):
         # Seleção dos pais (usando o método configurado)
         pai1 = selecionar_pai(populacao, distancias, metodo=METODO_SELECAO_PAIS)
+        # Garante que não se tenha 2 pais iguais
         while True:
             pai2 = selecionar_pai(populacao, distancias, metodo=METODO_SELECAO_PAIS)
             if pai2 != pai1:
                 break
         
-        # Crossover (Gera dois filhos)
+        # Cruzamento Crossover (OX) - Gera dois filhos
         filhos = crossover_ox(pai1, pai2)
         
         filhos_processados = []
         for filho in filhos:
-            # Mutação
+            # Mutação dos filhos com 20% de acontecer
             if random.random() < TAXA_MUTACAO:
                 filho = mutacao_swap(filho)
             
-            # PASSO 6: Melhoria Local (Somente com probabilidade)
+            # Melhoria local com 2-opt com 30% de acontecer
             if random.random() < PROB_BUSCA_LOCAL:
                 filho = busca_local_2opt(filho, distancias)
                 
@@ -208,11 +224,11 @@ if __name__ == "__main__":
         # Seleção de sobreviventes (Steady-state: mesclar população + filhos e selecionar os melhores)
         populacao = selecionar_sobreviventes_steady_state(populacao, filhos_processados, distancias, TAMANHO_POPULACAO)
         
-        if (g + 1) % 100 == 0:
-            custos = [custo_caminho(ind, distancias) for ind in populacao]
-            print(f"Geração {g+1:4}: Melhor = {min(custos)} | Média = {sum(custos)/len(custos):.1f}")
+        if (geracao + 1) % 100 == 0:
+            custos = [custo_caminho(individuo, distancias) for individuo in populacao]
+            print(f"Geração {geracao+1:4}: Melhor = {min(custos)} | Média = {sum(custos)/len(custos):.1f}")
 
-    custos_finais = [custo_caminho(ind, distancias) for ind in populacao]
+    custos_finais = [custo_caminho(individuo, distancias) for individuo in populacao]
     melhor_final = min(custos_finais)
     idx_melhor = custos_finais.index(melhor_final)
     melhor_rota = populacao[idx_melhor]
