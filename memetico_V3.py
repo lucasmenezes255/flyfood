@@ -19,6 +19,17 @@ def carregar_distancias(caminho_arquivo):
                     raise ValueError(f"Erro na linha {i}: elementos insuficientes.")
     return distancias
 
+def mutacao_inversao(solucao):
+    """
+    Escolhe dois pontos aleatórios na rota e inverte o segmento entre eles.
+    Excelente para o TSP pois quebra nós sem destruir toda a ordem da rota.
+    """
+    tamanho = len(solucao)
+    i, j = sorted(random.sample(range(tamanho), 2))
+    # Inverte o pedaço entre i e j
+    solucao[i:j+1] = solucao[i:j+1][::-1]
+    return solucao
+
 def custo_caminho(permutacao, distancias):
     soma = 0
     n = len(permutacao)
@@ -181,10 +192,10 @@ def selecionar_sobreviventes_steady_state(populacao, filhos, distancias, tamanho
 # ---------------------------------------------------------
 
 if __name__ == "__main__":
-    TAMANHO_POPULACAO = 100
-    N_GERACOES = 1000
-    PROB_BUSCA_LOCAL = 0.3
-    TAXA_MUTACAO = 0.2
+    TAMANHO_POPULACAO = 200
+    N_GERACOES = 2500
+    PROB_BUSCA_LOCAL = 0.15
+    TAXA_MUTACAO = 0.35
     ARQUIVO_DADOS = "edgesbrasil58.tsp"
     
     # Configuração do método de seleção de pais: "torneio" ou "roleta"

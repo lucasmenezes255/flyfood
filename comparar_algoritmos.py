@@ -2,8 +2,45 @@ import sys
 import os
 import time
 import random
-import itertools
 import memetico_V3
+
+arquivos = {'matriz5.txt':[{
+                'tempo': 0.0003,
+                'rota': 'A C E D B',
+                'custo': 18
+                }],
+            'matriz8.txt':[{
+                'tempo': 0.0449,
+                'rota': 'A B D G H F E C',
+                'custo': 24
+                }],
+            'matriz10.txt':[{
+                'tempo': 3.7273,
+                'rota': 'A B D F G H J I E C',
+                'custo': 30
+                }],
+            'matriz11.txt':[{
+                'tempo': 32.7921,
+                'rota': 'A B D F G H K J I E C',
+                'custo': 30
+                }],
+            'matriz12.txt':[{
+                'tempo': 442.8928,
+                'rota': 'A B D F G H K L J I E C',
+                'custo': 34
+                }],
+            'matriz13.txt':[{
+                'tempo': 7618.0707,
+                'rota': 'A B D F G H K L M J I E C',
+                'custo': 34
+                }],
+            'matriz14.txt':[{
+                'tempo': 90456.3126,
+                'rota': 'A B D F G I L M N K J H E C',
+                'custo': 50
+                }]
+}
+
 
 def carregar_matriz_flyfood(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
@@ -36,32 +73,41 @@ def carregar_matriz_flyfood(caminho_arquivo):
                 
     return localizacao_cidades
 
-def converter_para_distancias_ag(localizacao_cidades):
+def converter_para_distancias_ag(localizacao_cidades, arquivo):
     # R + cidades ordenadas alfabeticamente
     cidades_entrega = sorted([c for c in localizacao_cidades.keys() if c != 'R'])
     lista_cidades = ['R'] + cidades_entrega
-    
+
     # Mapeamento 1-based
     mapeamento_index = {i + 1: cidade for i, cidade in enumerate(lista_cidades)}
     mapeamento_cidade = {cidade: i + 1 for i, cidade in enumerate(lista_cidades)}
-    
     n_cidades = len(lista_cidades)
-    distancias_ag = {}
     
-    # Calcular Manhattan distances
-    for i in range(1, n_cidades + 1):
-        for j in range(1, n_cidades + 1):
-            if i != j:
-                c1 = mapeamento_index[i]
-                c2 = mapeamento_index[j]
-                pos1 = localizacao_cidades[c1]
-                pos2 = localizacao_cidades[c2]
-                dist = abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-                distancias_ag[(i, j)] = dist
-                distancias_ag[(j, i)] = dist
-            else:
-                distancias_ag[(i, j)] = 0
-                
+    arquivos_distancias = {
+        'matriz5.txt': 'matriz5_distances.txt',
+        'matriz8.txt': 'matriz8_distances.txt',
+        'matriz10.txt': 'matriz10_distances.txt',
+        'matriz11.txt': 'matriz11_distances.txt',
+        'matriz12.txt': 'matriz12_distances.txt',
+        'matriz13.txt': 'matriz13_distances.txt',
+        'matriz14.txt': 'matriz14_distances.txt',
+    }
+    
+    distancias_ag = {}
+    distancias = arquivos_distancias[arquivo]
+    # Lê os arquivos com as distâncias
+    with open(distancias, "r") as f:
+        for i in range(1, n_cidades):
+            linha = f.readline()
+            lista = linha.split()
+            for j in range(i + 1, n_cidades + 1):
+                if lista:
+                    peso = int(lista.pop(0))
+                    distancias_ag[(i, j)] = peso
+                    distancias_ag[(j, i)] = peso
+                else:
+                    raise ValueError(f"Erro na linha {i}: elementos insuficientes.")
+    print(distancias_ag)
     return distancias_ag, mapeamento_index, mapeamento_cidade
 
 def salvar_edges_tsp(distancias_ag, n_cidades, caminho_saida):
@@ -72,10 +118,10 @@ def salvar_edges_tsp(distancias_ag, n_cidades, caminho_saida):
                 linha.append(str(distancias_ag[(i, j)]))
             f.write(" ".join(linha) + "\n")
 
-def rodar_ag(distancias_ag, n_cidades, metodo_selecao_pais="torneio", tamanho_populacao=20, n_geracoes=1000, prob_busca_local=0.3, taxa_mutacao=0.2):
+def rodar_ag(distancias_ag, n_cidades, metodo_selecao_pais="torneio", tamanho_populacao=200, n_geracoes=2500, prob_busca_local=0.15, taxa_mutacao=0.35):
     populacao = memetico_V3.inicializar_populacao(tamanho_populacao, n_cidades)
     
-    for g in range(n_geracoes):
+    for _ in range(n_geracoes):
         # Selecionar pais
         pai1 = memetico_V3.selecionar_pai(populacao, distancias_ag, metodo=metodo_selecao_pais)
         pai2 = memetico_V3.selecionar_pai(populacao, distancias_ag, metodo=metodo_selecao_pais)
@@ -87,7 +133,7 @@ def rodar_ag(distancias_ag, n_cidades, metodo_selecao_pais="torneio", tamanho_po
         for filho in filhos:
             # Mutação
             if random.random() < taxa_mutacao:
-                filho = memetico_V3.mutacao_swap(filho)
+                filho = memetico_V3.mutacao_inversao(filho)
             # Busca local 2-opt
             if random.random() < prob_busca_local:
                 filho = memetico_V3.busca_local_2opt(filho, distancias_ag)
@@ -103,45 +149,6 @@ def rodar_ag(distancias_ag, n_cidades, metodo_selecao_pais="torneio", tamanho_po
     
     return melhor_custo_final, melhor_rota_final
 
-def rodar_forca_bruta(localizacao_cidades):
-    distancia_cidades = {}
-    
-    # Calcular distâncias entre cidades para a força bruta
-    for c1, c2 in itertools.combinations(localizacao_cidades.keys(), 2):
-        pos1 = localizacao_cidades[c1]
-        pos2 = localizacao_cidades[c2]
-        dist = abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-        distancia_cidades[(c1, c2)] = dist
-        distancia_cidades[(c2, c1)] = dist
-        
-    lista_cidades = list(localizacao_cidades.keys())
-    cidade_origem = 'R'
-    lista_cidades = [c for c in lista_cidades if c != 'R']
-    
-    menor_distancia = None
-    melhor_rota = None
-    
-    def calculo_tamanho_rota(rota, distancia, limite_atual):
-        total = 0
-        for c in range(len(rota) - 1):
-            total += distancia[(rota[c], rota[c+1])]
-            if limite_atual is not None and total >= limite_atual:
-                return None
-        total += distancia[(rota[-1], rota[0])]
-        return total
-        
-    for permuta in itertools.permutations(lista_cidades, len(lista_cidades)):
-        rota = [cidade_origem] + list(permuta)
-        tamanho_rota = calculo_tamanho_rota(rota, distancia_cidades, menor_distancia)
-        
-        if tamanho_rota is None:
-            continue
-        elif menor_distancia is None or tamanho_rota < menor_distancia:
-            menor_distancia = tamanho_rota
-            melhor_rota = rota
-            
-    return menor_distancia, melhor_rota
-
 def formatar_rota(rota_indices, mapeamento_index):
     # Encontra onde está R (indice 1) e rotaciona a rota para começar por 1
     idx_r = rota_indices.index(1)
@@ -156,52 +163,46 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso: python3 comparar_algoritmos.py <caminho_matriz_flyfood>")
         sys.exit(1)
-        
+
+    folder = 'forca_bruta'
+    path_configurado = os.path.join(folder, sys.argv[1])
     caminho_arquivo = sys.argv[1]
     
     print(f"Lendo matriz de: {caminho_arquivo}")
-    localizacao_cidades = carregar_matriz_flyfood(caminho_arquivo)
+    localizacao_cidades = carregar_matriz_flyfood(path_configurado)
     
     # R + cidades
     cidades_entrega = [c for c in localizacao_cidades.keys() if c != 'R']
     print(f"Total de pontos de entrega: {len(cidades_entrega)} ({', '.join(sorted(cidades_entrega))})")
     
-    # 1. Converter para formato AG
-    distancias_ag, mapeamento_index, mapeamento_cidade = converter_para_distancias_ag(localizacao_cidades)
-    
-    # Salvar em arquivo no mesmo formato do brazil58 para demonstrar a conversão
-    caminho_saida_tsp = caminho_arquivo.replace(".txt", "_edges.tsp")
-    salvar_edges_tsp(distancias_ag, len(localizacao_cidades), caminho_saida_tsp)
-    print(f"Matriz de distâncias salva no formato brazil58 em: {caminho_saida_tsp}")
-    
+    # Obeter as distâncias entre as cidades e o mapeamento entre cidade e índice
+    distancias_ag, mapeamento_index, mapeamento_cidade = converter_para_distancias_ag(localizacao_cidades, caminho_arquivo)
+
     print("\n" + "="*60)
     print(f"{' COMPARANDO ALGORITMO GENÉTICO VS FORÇA BRUTA ':^60}")
     print("="*60)
     
-    # 2. Executar Força Bruta
-    print("\nExecutando Força Bruta com poda...")
-    inicio_fb = time.perf_counter()
-    custo_fb, rota_fb = rodar_forca_bruta(localizacao_cidades)
-    fim_fb = time.perf_counter()
-    tempo_fb = fim_fb - inicio_fb
+    # Exibir os dados da Força Bruta
+    print("\n\033[32mDados da força bruta com poda")
+    print('-'*60)
     
-    rota_fb_formatada = " ".join([c for c in rota_fb if c != 'R'])
-    print(f"Força Bruta finalizada em {tempo_fb:.4f} segundos.")
-    print(f"  Melhor Rota (FB): {rota_fb_formatada}")
-    print(f"  Custo (FB):       {custo_fb}")
+    dados_fb = arquivos[caminho_arquivo] 
+    print(f"  Força Bruta finalizada em \033[33m{dados_fb[0]['tempo']}\033[32m segundos.")
+    print(f"  Melhor Rota (FB): \033[33m{dados_fb[0]['rota']}\033[32m")
+    print(f"  Custo (FB):       \033[33m{dados_fb[0]['custo']}\033[m")
     
-    # 3. Executar Algoritmo Genético (V3)
-    # Vamos rodar com torneio e roleta
+    # Executar Algoritmo Genético (V3) com torneio E roleta
     for metodo in ["torneio", "roleta"]:
-        print(f"\nExecutando Algoritmo Genético (V3) - Seleção de Pais: {metodo.upper()}...")
+        print(f"\n\033[36mExecutando Algoritmo Genético (V3) - Seleção de Pais: \033[31m{metodo.upper()}...\033[36m")
+        print('-'*60)
         inicio_ag = time.perf_counter()
         custo_ag, rota_ag = rodar_ag(distancias_ag, len(localizacao_cidades), metodo_selecao_pais=metodo)
         fim_ag = time.perf_counter()
         tempo_ag = fim_ag - inicio_ag
         
         rota_ag_formatada = formatar_rota(rota_ag, mapeamento_index)
-        print(f"Algoritmo Genético finalizado em {tempo_ag:.4f} segundos.")
-        print(f"  Melhor Rota (AG): {rota_ag_formatada}")
-        print(f"  Custo (AG):       {custo_ag}")
-        diferenca_percentual = ((custo_ag - custo_fb) / custo_fb) * 100
-        print(f"  Diferença de Custo vs FB: {diferenca_percentual:.2f}%")
+        print(f"Algoritmo Genético finalizado em \033[33m{tempo_ag:.4f}\033[36m segundos.")
+        print(f"  Melhor Rota (AG): \033[33m{rota_ag_formatada}\033[36m")
+        print(f"  Custo (AG):       \033[33m{custo_ag}\033[36m")
+        diferenca_percentual = ((custo_ag - dados_fb[0]['custo']) / dados_fb[0]['custo']) * 100
+        print(f"  Diferença de Custo vs FB: \033[33m{diferenca_percentual:.2f}%\033[m")
