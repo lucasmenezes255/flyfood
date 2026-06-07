@@ -41,7 +41,6 @@ arquivos = {'matriz5.txt':[{
                 }]
 }
 
-
 def carregar_matriz_flyfood(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
         raise FileNotFoundError(f"Arquivo {caminho_arquivo} não encontrado.")
