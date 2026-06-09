@@ -106,7 +106,6 @@ def converter_para_distancias_ag(localizacao_cidades, arquivo):
                     distancias_ag[(j, i)] = peso
                 else:
                     raise ValueError(f"Erro na linha {i}: elementos insuficientes.")
-    print(distancias_ag)
     return distancias_ag, mapeamento_index, mapeamento_cidade
 
 def salvar_edges_tsp(distancias_ag, n_cidades, caminho_saida):
