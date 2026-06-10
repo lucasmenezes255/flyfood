@@ -1,95 +1,112 @@
 ![Static Badge](https://img.shields.io/badge/Conclu%C3%ADdo-229922?style=for-the-badge)
 
-# 🚚 Flyfood - Otimização de rotas para drones autônomos 
-O FlyFood é um projeto de otimização logística focado em entregas autônomas via drones. Sendo concretizado a partir de um algoritmo em Python criado para solucionar o problema do Caxeiro Viajante - *Traveling Salesman Problem*, um problema clássico de Grafos, ao qual o FlyFood é uma derivação direta, classificado como um problema NP-difícil, pois a solução exata do problema é computacionalmente inviável conforme o número de cidades cresce.
+# 🚚 Flyfood - Otimização de Rotas para Drones Autônomos via Algoritmos Meméticos
 
-⚠️ *Nota: Este algoritmo utiliza busca exaustiva com complexidade **O(n!)**, garantindo a solução ótima absoluta.*
+O **FlyFood** é um projeto de otimização logística focado em entregas autônomas via drones. Ele resolve o clássico Problema do Caixeiro Viajante (*Traveling Salesman Problem* - TSP) aplicado ao contexto de entregas em matrizes esparsas. Como o TSP é classificado como **NP-difícil**, a busca exaustiva (força bruta) torna-se computacionalmente inviável conforme o número de destinos cresce.
 
-A ideia principal é usar esse código para fazer com que um drone de *delivery* calcule a rota mais eficiente, de menor custo dentro das cidades onde precisa fazer entrega através do método conhecido como **força bruta** ou **busca exaustiva**.
+Para superar essa barreira de escalabilidade, o projeto evoluiu de uma solução de busca exaustiva para uma abordagem baseada em **Algoritmos Meméticos** (Algoritmo Genético combinado com a meta-heurística de Busca Local 2-opt). Essa combinação permite obter soluções de altíssima qualidade (geralmente idênticas às ótimas) em frações de segundo, mesmo para grandes volumes de cidades.
 
+---
 
 ## 📌 Características Técnicas
-Para abstração do problema, as cidades estão dispostas em uma matriz esparsa, onde o ponto *$R$* sempre será o ponto de partida e retorno da rota do drone. O objetivo é calcular a menor rota percorrendo todas as cidades da matriz e retornando ao ponto *$R$*.
 
-- **Métrica de Manhattan:** Utiliza a *Distância de Manhattan* para calcular a distância entre as cidades, respeitando as limitações físicas de voo do drone nos eixos ortogonais.
+- **Métrica de Manhattan:** Utiliza a *Distância de Manhattan* para medir o custo de deslocamento entre os pontos de entrega na matriz, respeitando as limitações físicas de voo dos drones em eixos ortogonais:
 
 $$d(P_1, P_2) = | x_1 - x_2 | + | y_1 - y_2 |$$
 
-- **Força bruta:** O Programa deve encontrar todas as rotas possíveis na matriz: $n!$ e compara uma a uma o tamanho das rotas entre si em busca da rota de menor tamanho. Quando encontra a menor rota, deve retornar a sequência de cidades que o drone deverá seguir para ser mais eficiente.
-
-- **PODA (AKA Pruning):** O algoritmo possui um sistema inteligente de poda que interrompe o cálculo de uma rota no meio do caminho caso sua distância acumulada já seja maior que a menor rota já analisada, poupando operações computacionais.
-
-- **Teste automatizado:** Inclui uma maneira automatica de testar as matrizes, indo de uma maneira crescente com a opção de cancelar a operação do codigo.
-
-
-### 🚩 Problema da força bruta
-Esse algoritmo chega no limite de processamento da máquina de forma muito rápida, pois precisa de todas as $n!$ permutações de cidade para encontrar a menor. Amostra de crescimento do problema:
-
-- Com 5 cidades: $5! = 120$ possíveis rotas
-- Com 8 cidades: $8! = 40.320$ possíveis rotas
-- Com 10 cidades: $10! = 3.628.800$ possíveis rotas
-- Com 11 cidades: $11! = 39.916.800$ possíveis rotas
-- Com 12 cidades: $12! = 479.001.600$ possíveis rotas
-- Com 13 cidades: $13! = 6.2287.020.800$ possíveis rotas
-- Com 14 cidades: $14! = 87.178.291.200$ possíveis rotas
-
-### Artigo - Otimização de rotas para drones: Abordagem via força bruta para o problema do FlyFood
-
-Para informações mais detalhadas e profundas acerca da construção do algoritmo, motivações do projeto, metodologia adotada e análise de resultados, você pode ler o artigo criado pelos desenvolvedores através [deste link](https://drive.google.com/file/d/10tGLSzvwy_PMY2b05rffMeQMUTbtC5Ss/view?usp=drive_link) ou acessando o arquivo *FlyFood.pdf* no repositório
+- **Algoritmo Genético (AG):** Explora o espaço de busca globalmente simulando a seleção natural. Ele mantém uma população de rotas representadas como permutações de cidades que passam por processos de seleção de pais, cruzamento (*crossover*) e mutação ao longo de várias gerações.
+- **Busca Local (2-opt) - O Toque Memético:** Refina as rotas individuais encontradas pelo AG. O operador 2-opt remove auto-interseções e caminhos ineficientes invertendo segmentos da rota de forma iterativa, garantindo a "lapidação" da melhor solução local.
+- **Estrutura de Rota:** O ponto de partida e de retorno é sempre a base de recarga e carregamento designada por **R**. A saída do algoritmo exibe a sequência de entrega omitindo o ponto **R** nos resultados intermediários para legibilidade.
 
 ---
-### 🖥️ Interface do algoritmo
-```text
-input
 
-    6 6
-    R 0 0 A 0 B
-    0 0 0 0 0 0
-    0 C 0 0 D 0
-    0 0 0 0 0 0
-    E 0 0 F 0 G
-    0 0 0 0 0 H
-```
-A partir disso, o programa deve calcular a menor rota partindo de *$R$* e retornar essa rota onde o ponto *$R$* pode ser omitido, além de retornar o tamanho da rota e o custo que ela teve:
+## 📈 Evolução do Algoritmo (V1 ➔ V2 ➔ V3)
 
-```text
-output
+O algoritmo evoluiu através de três versões principais na pasta [genetic_alg](./genetic_alg) para combater a convergência prematura e maximizar a diversidade populacional:
 
-    Menor rota: A B D G H F E C
+| Funcionalidade / Parâmetro | [Memético V1](./genetic_alg/memetico_V1.py) (Básico) | [Memético V2](./genetic_alg/memetico_V2.py) (Diversidade) | [Memético V3](./genetic_alg/memetico_V3.py) (Otimizado) |
+| :--- | :--- | :--- | :--- |
+| **Tamanho da População** | 10 indivíduos | 20 indivíduos | 200 indivíduos |
+| **Gerações** | 500 | 1000 | 2500 |
+| **Inicialização** | Permutações aleatórias comuns | Apenas indivíduos únicos (sem duplicatas) | Apenas indivíduos únicos (sem duplicatas) |
+| **Seleção de Pais** | Roleta baseada na aptidão inversa ($1/\text{custo}$) | Torneio ($k=3$) para atenuar pressão seletiva | Escolha entre Torneio Binário ($k=2$) ou Roleta |
+| **Crossover** | Order Crossover (OX) - Gera 1 filho | Order Crossover (OX) - Gera 2 filhos (inverte papéis) | Order Crossover (OX) - Gera 2 filhos |
+| **Mutação** | Swap (10% de chance) | Swap (20% de chance) | Swap ou Inversão de Segmento (35% de chance) |
+| **Busca Local (2-opt)** | Aplicado a 100% dos indivíduos | Aplicado probabilisticamente (30% de chance) | Aplicado probabilisticamente (15% de chance) |
+| **Sobrevivência** | Substitui pior se o filho for estritamente melhor | Substitui pior, bloqueando entrada de duplicatas | *Steady-State* com mesclagem global e eliminação de duplicados |
 
-    Tamanho da rota: 24
+---
 
-    Demorou: 0.03 segundos
-```
+## 🖥️ Estrutura do Repositório
 
-### 🔹 Estrutura do Repositório
 ```text
 flyfood
-┣ forca_bruta.py           # Arquivo principal com o algoritmo de roteamento
-┣ matriz5.txt a matriz14.txt # Conjunto de dados de teste (5 a 14 cidades)
-┣ README.md # Você esta lendo ele agora.
+┣ 📂 forca_bruta                  # Versão legada por força bruta
+┃ ┣ 📄 forca_bruta.py             # Algoritmo exaustivo com poda (O(n!))
+┃ ┗ 📄 matriz5.txt a matriz14.txt # Casos de teste originais
+┣ 📂 genetic_alg                  # Nova versão com Algoritmo Genético/Memético
+┃ ┣ 📄 memetico_V1.py             # Versão conceitual básica
+┃ ┣ 📄 memetico_V2.py             # Versão com melhor controle de diversidade
+┃ ┣ 📄 memetico_V3.py             # Versão otimizada de alta performance
+┃ ┣ 📄 comparar_algoritmos.py     # Script que compara AG V3 contra a Força Bruta
+┃ ┣ 📄 lerBrasil58.py             # Utilitário de carregamento do dataset Brazil58
+┃ ┣ 📄 brazil58.tsp               # Arquivo TSPLIB com distâncias explícitas de 58 cidades brasileiras
+┃ ┣ 📄 edgesbrasil58.tsp          # Matriz de adjacência formatada para o Brazil58
+┃ ┗ 📄 matriz5_distances.txt a matriz14_distances.txt # Tabelas de distâncias convertidas das matrizes
+┗ 📄 README.md                    # Documentação principal (você está lendo agora)
 ```
 
-### 🔹 Clonar o repositório e executar o código
-1. Clone o repositório
+---
 
-```
+## ⚡ Resultados: Força Bruta vs. Algoritmo Genético (V3)
+
+A tabela abaixo exibe a comparação prática entre a busca exaustiva (Força Bruta) e o Algoritmo Memético V3 rodando nas matrizes de teste originais:
+
+| Entrada | Qtd. Cidades | Tempo Força Bruta | Custo FB | Tempo AG (V3) | Custo AG | Diferença vs. FB |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `matriz5.txt` | 5 | 0.0003s | 18 | ~1.2s | 18 | **0.00%** (Ótimo) |
+| `matriz8.txt` | 8 | 0.0449s | 24 | ~1.2s | 24 | **0.00%** (Ótimo) |
+| `matriz10.txt` | 10 | 3.7273s | 30 | ~1.3s | 30 | **0.00%** (Ótimo) |
+| `matriz11.txt` | 11 | 32.7921s | 30 | ~1.3s | 30 | **0.00%** (Ótimo) |
+| `matriz12.txt` | 12 | 7.38 min (442.89s) | 34 | ~1.4s | 34 | **0.00%** (Ótimo) |
+| `matriz13.txt` | 13 | 2.11 horas (7618.07s) | 34 | ~1.5s | 34 | **0.00%** (Ótimo) |
+| `matriz14.txt` | 14 | 25.12 horas (90456.31s)| 50 | **~1.6s** | 50 | **0.00%** (Ótimo) |
+
+> [!TIP]
+> **Ganho de Escala:** Para a `matriz14.txt`, o Algoritmo Genético V3 reduziu o tempo de execução de **mais de 25 horas para apenas 1.6 segundos**, mantendo a precisão absoluta de 100% (erro de 0.00% em relação à rota ótima global).
+
+---
+
+## 🚀 Como Executar o Código
+
+### Pré-requisitos
+Certifique-se de ter o Python 3 instalado no sistema. Não são necessárias bibliotecas externas adicionais (usa apenas módulos padrão como `random`, `time`, `sys` e `os`).
+
+### 1. Clonar o repositório
+```bash
 git clone https://github.com/lucasmenezes255/flyfood.git
-```
-
-2. Entre na pasta do projeto
-
-```
 cd flyfood
 ```
 
-3. Execute o código python
-
+### 2. Executar e Comparar Algoritmos (Matrizes de 5 a 14 cidades)
+Para rodar a ferramenta de comparação que executa o AG V3 (com Seleções por Torneio e Roleta) contra os tempos registrados da força bruta, navegue até a pasta `genetic_alg` e forneça o nome do arquivo da matriz como argumento:
+```bash
+cd genetic_alg
+python comparar_algoritmos.py matriz14.txt
 ```
-python forca_bruta.py
-```
 
-# Créditos
+### 3. Executar o AG V3 na base de dados nacional (Brazil58 - 58 Cidades)
+Para testar a capacidade do Algoritmo Memético V3 em larga escala com um problema de 58 cidades (onde o espaço de busca excede $10^{70}$ rotas possíveis), execute:
+```bash
+python memetico_V3.py
+```
+O algoritmo imprimirá o melhor custo encontrado a cada 100 gerações, finalizando com a exibição do caminho indexado de 58 cidades e custo mínimo aproximado (geralmente convergindo para ~25.395).
+
+---
+
+## 👥 Créditos
+
+Este projeto foi desenvolvido e mantido por:
 - **Bruno Fellype de Santana Vieira** - [GitHub](https://github.com/BrunoFellype)
 - **Isaque Lucas Pedrosa Velozo** - [GitHub](https://github.com/BlairFruit)
 - **Lucas Menezes dos Santos** - [GitHub](https://github.com/lucasmenezes255)
